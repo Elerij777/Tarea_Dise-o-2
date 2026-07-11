@@ -1,0 +1,12 @@
+[
+    {
+        "id": "uuid-v4",
+        "dniCliente": "0501-2000-12345",
+        "nombreCompleto": "Juan Perez",
+        "montoSolicitado": 15000,
+        "plazoMeses": 12,
+        "tasaInteres": 3.5,
+        "estado": "PENDIENTE",
+        "fechaCreacion": "2026-07-05T10:00:00Z"
+    }
+]
