@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { jsonResponse } from '../helpers/json_response.js';
-//import { validateEstado, validateSolicitud } from '../schemas/solicitudes.schema.js'
+import { validateEstado, validateSolicitud } from '../schemas/solicitudes.schema.js';
 class SolicitudModel {
     static getAllSolicitudes = async (req, res) => {
         try {
@@ -39,7 +39,7 @@ class SolicitudModel {
     static createSolicitud = async (req, res) => {
         const payload = req.body;
     
-        //const validation = validateSolicitud(payload);
+        const validation = validateSolicitud(payload);
     
         if (!validation.success) {
             return res.status(400).json(jsonResponse({
@@ -74,7 +74,7 @@ class SolicitudModel {
         const payload = req.body;
         const { id } = req.params;
     
-        //const validation = validateSolicitud(payload);
+        const validation = validateSolicitud(payload);
     
         if (!validation.success) {
             return res.status(400).json(jsonResponse({
@@ -122,7 +122,7 @@ class SolicitudModel {
         const payload = req.body;
         const { id } = req.params;
     
-        //const validation = validateEstado(payload);
+        const validation = validateEstado(payload);
     
         if (!validation.success) {
             return res.status(400).json(jsonResponse({
