@@ -1,153 +1,97 @@
 import { randomUUID } from 'node:crypto';
 import { jsonResponse } from '../helpers/json_response.js'
 import SolicitudModel from '../models/solicitudes.model.js';
-//import { validateEstado, validateSolicitud } from '../schemas/solicitudes.schema.js'
 
-export const getAllSolicitudes = async (req, res) => {
+export const getAll = async (req, res, next) => {
     try {
         const { estado } = req.query;
-
-        const solicitudes = await SolicitudModel.getAllSolicitudes(estado);
-
-        return res.json(jsonResponse({
-            message: 'Listado de solicitudes',
-            data: solicitudes
-        }));
-    } catch (e) {
-        return res.status(500).json(jsonResponse({ status: 500, message: e.message, data: null }));
+        const data = await SolicitudModel.getAll(estado);
+        res.status(200).json(jsonResponse({ 
+            status: 200,
+            message: 'Listado obtenido',
+             data }))
+    } catch (e) { 
+        next(e)
     }
 }
 
-export const getSolicitudById = async (req, res) => {
+export const getById = async (req, res, next) => {
     try {
-        const { id } = req.params;
-        const solicitud = await SolicitudModel.getSolicitudById(id);
-
-        if (!solicitud) {
-            return res.status(404).json(jsonResponse({
-                status: 404,
-                message: 'Solicitud no encontrada',
-            }));
-        }
-        return res.json(jsonResponse({
-            message: 'Información de la solicitud',
-            data: solicitud
-        }));
-    } catch (e) {
-        return res.status(500).json(jsonResponse({ status: 500, message: e.message }));
+        const data = await SolicitudModel.getById(req.params.id);
+        if (!data) 
+            return res.status(404).json(jsonResponse({ 
+        status: 404, 
+        message: 'No encontrada' }))
+        res.json(jsonResponse({ data }))
+    } catch (e) { 
+        next(e)
     }
-}
-export const createSolicitud = async (req, res) => {
-    const payload = req.body;
-    //const validation = validateSolicitud(payload);
+};
 
-    if (!validation.success) {
-        return res.status(400).json(jsonResponse({
-            status: 400,
-            message: 'No pasó las validaciones',
-            data: validation.error.errors
-        }));
-    }
-
+export const createSolicitud = async (req, res, next) => {
     try {
-        const nuevaSolicitudData = {
-            id: randomUUID(),
-            ...validation.data,
-            estado: 'PENDIENTE',
-            fechaCreacion: new Date().toISOString()
+        const nueva = { 
+            id: randomUUID(), 
+            ...req.body, 
+            estado: 'PENDIENTE', 
+            fechaCreacion: new Date().toISOString() 
         };
-
-        const newSolicitud = await SolicitudModel.createSolicitud(nuevaSolicitudData);
-
-        return res.status(201).json(jsonResponse({
+        const data = await SolicitudModel.createSolicitud(nueva);
+        res.status(201).json(jsonResponse({ 
             status: 201,
-            message: 'Solicitud creada con éxito',
-            data: newSolicitud
-        }));
-
-    } catch (e) {
-        return res.status(500).json(jsonResponse({ status: 500, message: e.message }));
+             data }))
+    } catch (e) { 
+        next(e) 
     }
 }
 
-export const updateSolicitud = async (req, res) => {
-    const payload = req.body;
-    const { id } = req.params;
-
-    //const validation = validateSolicitud(payload);
-
-    if (!validation.success) {
-        return res.status(400).json(jsonResponse({
-            status: 400,
-            message: 'No pasó las validaciones',
-            data: validation.error.errors
-        }));
-    }
-
+export const updateSolicitud = async (req, res, next) => {
     try {
-        const existeSolicitud = await SolicitudModel.getSolicitudById(id);
-
-        if (!existeSolicitud) {
-            return res.status(404).json(jsonResponse({
-                status: 404,
-                message: 'La solicitud no existe',
-            }));
-        }
-        if (existeSolicitud.estado !== 'PENDIENTE') {
-            return res.status(400).json(jsonResponse({
-                status: 400,
-                message: `No se puede modificar una solicitud que ya está en estado ${existeSolicitud.estado}`,
-            }));
-        }
-        const dataActualizada = {
-            ...existeSolicitud,
-            ...validation.data
-        };
-
-        const updated = await SolicitudModel.updateSolicitud(id, dataActualizada);
-
-        return res.status(200).json(jsonResponse({
-            status: 200,
-            message: 'Solicitud modificada exitosamente',
-            data: updated
-        }));
-
+        const solicitud = await SolicitudModel.getById(req.params.id);
+        if (!solicitud) 
+            return res.status(404).json(jsonResponse({ 
+        status: 404, 
+        message: 'No encontrada' }));
+        if (solicitud.estado !== 'PENDIENTE') 
+            return res.status(400).json(jsonResponse({ 
+        status: 400,
+        message: 'Solo se pueden editar solicitudes PENDIENTES' }));
+        
+        const data = await SolicitudModel.updateSolicitud(req.params.id, req.body);
+        res.json(jsonResponse({ data }));
     } catch (e) {
-        return res.status(500).json(jsonResponse({ status: 500, message: e.message }));
+        next(e)
+ }
+}
+
+
+export const updateEstado = async (req, res, next) => {
+    try {
+        const data = await SolicitudModel.updateEstado(req.params.id, req.body.estado);
+        if (!data) 
+            return res.status(404).json(jsonResponse({ 
+        status: 404, 
+        message: 'No encontrada' }))
+        res.status(200).json(jsonResponse({ 
+            status: 200,
+            message: 'Estado actualizado', 
+            data }))
+    } catch (e) { 
+        next(e)
     }
 }
-export const updateSolicitudEstado = async (req, res) => {
-    const payload = req.body;
-    const { id } = req.params;
 
-    //const validation = validateEstado(payload);
-
-    if (!validation.success) {
-        return res.status(400).json(jsonResponse({
-            status: 400,
-            message: 'Estado no válido',
-            data: validation.error.errors
-        }));
-    }
-
+export const deleteSolicitud = async (req, res, next) => {
     try {
-        const existeSolicitud = await SolicitudModel.getSolicitudById(id);
-
-        if (!existeSolicitud) {
-            return res.status(404).json(jsonResponse({
-                status: 404,
-                message: 'La solicitud no existe',
-            }));
-        }
-        const updated = await SolicitudModel.updateEstado(id, validation.data.estado);
-
-        return res.status(200).json(jsonResponse({
+        const success = await SolicitudModel.delete(req.params.id);
+        if (!success) 
+            return res.status(404).json(jsonResponse({ 
+        status: 404, 
+        message: 'No encontrada' }));
+        res.status(200).json(jsonResponse({ 
             status: 200,
-            message: `El estado de la solicitud se cambió a ${validation.data.estado}`,
-            data: updated
-        }));
-
-    } catch (e) {
-        return res.status(500).json(jsonResponse({ status: 500, message: e.message }));
+            message: 'Eliminada correctamente' }));
+    } catch (e) { 
+        next(e)
     }
 }
